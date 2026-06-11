@@ -43,13 +43,26 @@ body{
   transition:transform .65s cubic-bezier(.76,0,.24,1);
 }
 #boot.gone{transform:translateY(-101%)}
-#boot pre{
-  font-family:var(--mono);font-size:clamp(.72rem,1.6vw,.88rem);line-height:2;
-  color:var(--txt-dim);min-width:min(520px,86vw);
+.boot-inner{width:min(560px,84vw);text-align:center}
+.boot-name{
+  font-family:var(--sans);font-weight:700;letter-spacing:.22em;
+  font-size:clamp(1.3rem,3.4vw,1.9rem);color:var(--txt);margin-bottom:10px;
 }
-#boot .ok{color:var(--green)}
-#boot .hot{color:var(--blue)}
-#boot .dim{color:var(--txt-faint)}
+.boot-name b{color:var(--blue)}
+.boot-tag{
+  font-family:var(--mono);font-size:clamp(.74rem,1.8vw,.9rem);
+  color:var(--txt-dim);margin-bottom:38px;letter-spacing:.04em;
+}
+.boot-bar{height:3px;border-radius:100px;background:rgba(148,180,210,.14);overflow:hidden;margin-bottom:14px}
+.boot-bar i{
+  display:block;height:100%;width:0;border-radius:inherit;
+  background:linear-gradient(90deg,var(--blue),var(--teal));
+  box-shadow:0 0 14px rgba(61,139,255,.7);
+}
+.boot-pct{
+  font-family:var(--mono);font-size:.8rem;font-weight:600;color:var(--blue);
+  font-variant-numeric:tabular-nums;
+}
 
 /* ── custom cursor ── */
 @media(pointer:fine){
@@ -451,7 +464,14 @@ html.hs #platform .reveal{opacity:1;transform:none;transition:none}
 </style>
 </head>
 <body>
-<div id="boot"><pre id="bootlog"></pre></div>
+<div id="boot">
+  <div class="boot-inner">
+    <div class="boot-name">PASKEN</div>
+    <div class="boot-tag">your ticket to integrating with tech</div>
+    <div class="boot-bar"><i id="bootfill"></i></div>
+    <div class="boot-pct" id="bootpct">0%</div>
+  </div>
+</div>
 <canvas id="mol"></canvas>
 <div id="glow"></div>
 <div id="progress"></div>
@@ -712,31 +732,26 @@ const DESKTOP=matchMedia('(min-width:981px)').matches;
 const HAS_GSAP=typeof gsap!=='undefined'&&typeof ScrollTrigger!=='undefined';
 if(HAS_GSAP){gsap.registerPlugin(ScrollTrigger);document.documentElement.classList.add('gsap')}
 
-/* ── boot sequence ── */
-const boot=document.getElementById('boot'),bootlog=document.getElementById('bootlog');
-const BOOT_LINES=[
-  ['dim','PASKEN OS v2.1 — boot'],
-  ['','loading agents: po-bot payalert expo-follow'],
-  ['ok','✓ spectrum bridge          [ ready ]'],
-  ['ok','✓ whatsapp channel         [ ready ]'],
-  ['hot','➜ entering production mode'],
-];
+/* ── loader: brand line + 0→100% ── */
+const boot=document.getElementById('boot');
 function endBoot(){
   if(boot.classList.contains('gone'))return;
   boot.classList.add('gone');
   setTimeout(()=>{document.documentElement.classList.add('ready');boot.remove()},420);
 }
-if(REDUCED||sessionStorage.getItem('pkn-booted')){
+if(REDUCED){
   boot.remove();document.documentElement.classList.add('ready');
 }else{
-  sessionStorage.setItem('pkn-booted','1');
   boot.addEventListener('click',endBoot);
-  let t=120;
-  BOOT_LINES.forEach(([cls,txt])=>{
-    setTimeout(()=>{bootlog.innerHTML+=(cls?`<span class="${cls}">${txt}</span>`:txt)+'\n'},t);
-    t+=170;
+  const fill=document.getElementById('bootfill'),pct=document.getElementById('bootpct');
+  const BOOT_MS=1400,t0=performance.now();
+  requestAnimationFrame(function tick(t){
+    const p=Math.min(1,(t-t0)/BOOT_MS),eased=1-Math.pow(1-p,2.5);
+    const v=Math.round(eased*100);
+    fill.style.width=v+'%';pct.textContent=v+'%';
+    if(p<1)requestAnimationFrame(tick);
+    else setTimeout(endBoot,250);
   });
-  setTimeout(endBoot,t+420);
 }
 
 /* ── custom cursor ── */
